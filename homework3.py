@@ -56,8 +56,7 @@ fitness: float
 
 Methods
 -------
-says(sound=None)
-    Prints the animals name and what sound it makes
+
 """
 
 
@@ -73,6 +72,53 @@ class Path:
         return fitness
 
 
+"""
+A class used to represent a location
+...
+
+Attributes
+----------
+x, y, z : integer 
+    x, y, z coordinate 
+
+coordinate: np.array
+    the original coordinate
+
+Methods
+-------
+get_distance_2d(self, loc2)
+    get 2d distance between this location and loc2
+    
+get_distance_3d(self, loc2)
+    get 3d distance between this location and loc2
+"""
+
+
+class Location:
+    def __init__(self, coord):
+        self.x = coord[0]
+        self.y = coord[1]
+        self.z = coord[2]
+        self.coordinate = coord
+
+    def get_distance_2d(self, loc2):
+        # compute the 2d distance between 2 locations
+        dis_x = abs(self.x - loc2.x)
+        dis_y = abs(self.y - loc2.y)
+        distance = np.sqrt(dis_x ** 2 + dis_y ** 2)
+
+        return distance
+
+    def get_distance_3d(self, loc2):
+        # compute the 3d distance between 2 coordinates
+        dis_x = abs(self.x - loc2.x)
+        dis_y = abs(self.y - loc2.y)
+        dis_z = abs(self.z - loc2.z)
+        distance = np.sqrt(dis_x ** 2 + dis_y ** 2 + dis_z ** 2)
+
+        return distance
+
+
 if __name__ == '__main__':
     with open("input.txt") as file:
         lines = file.readlines()
@@ -82,4 +128,5 @@ if __name__ == '__main__':
     loc_matrix = loc_to_matrix(lines[1:], int(lines[0]))
 
     # Create paths using loc_matrix
+
 
