@@ -41,6 +41,7 @@ def get_distance_3d(loc1, loc2):
 
 
 def get_distances_list(loc_num):
+    distances = []
     for loc_start in range(num_of_loc):
         for loc_to in range(num_of_loc):
             if loc_start == loc_to:
@@ -50,7 +51,8 @@ def get_distances_list(loc_num):
                 dist = default_arr[loc_start].get_distance_3d(default_arr[loc_to])
                 distances.append(Distance(default_arr[loc_start], default_arr[loc_to], dist))
                 distances.append(Distance(default_arr[loc_to], default_arr[loc_start], dist))
-# TODO: return distance, ....
+
+    return distances
 
 
 def sort_locations(path, orig_path, distances):
@@ -224,16 +226,7 @@ if __name__ == '__main__':
     gene_pool_init = np.empty(0)
 
     # calculate distances between any pair of locations
-    distances = []
-    for loc_start in range(num_of_loc):
-        for loc_to in range(num_of_loc):
-            if loc_start == loc_to:
-                distances.append(Distance(default_arr[loc_start], default_arr[loc_to], 0))
-                distances.append(Distance(default_arr[loc_to], default_arr[loc_start], 0))
-            else:
-                dist = default_arr[loc_start].get_distance_3d(default_arr[loc_to])
-                distances.append(Distance(default_arr[loc_start], default_arr[loc_to], dist))
-                distances.append(Distance(default_arr[loc_to], default_arr[loc_start], dist))
+    distances = get_distances_list(num_of_loc)
 
     # for d in distances:
     #     d.printout()
