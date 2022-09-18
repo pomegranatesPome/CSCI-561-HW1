@@ -20,37 +20,18 @@ def loc_to_matrix(locations, numoflocs):
 
     return matrix
 
-
-def get_distance_2d(loc1, loc2):
-    # compute the 2d distance between 2 coordinates
-    dis_x = abs(loc1[0] - loc2[0])
-    dis_y = abs(loc1[1] - loc2[1])
-    distance = np.sqrt(dis_x ** 2 + dis_y ** 2)
-
-    return distance
-
-
-def get_distance_3d(loc1, loc2):
-    # compute the 3d distance between 2 coordinates
-    dis_x = abs(loc1[0] - loc2[0])
-    dis_y = abs(loc1[1] - loc2[1])
-    dis_z = abs(loc1[2] - loc2[2])
-    distance = np.sqrt(dis_x ** 2 + dis_y ** 2 + dis_z ** 2,)
-
-    return distance
-
-
-def get_distances_list(loc_num):
-    distances = []
+def get_adjacent_matrix(loc_num):
+    # distances is a 2d array of adjacent matrix
+    distances = [[0] * loc_num for i in range(loc_num)]
     for loc_start in range(num_of_loc):
         for loc_to in range(num_of_loc):
             if loc_start == loc_to:
-                distances.append(Distance(default_arr[loc_start], default_arr[loc_to], 0))
-                distances.append(Distance(default_arr[loc_to], default_arr[loc_start], 0))
+                distances[loc_start][loc_to] = 0
+                distances[loc_to][loc_start] = 0
             else:
                 dist = default_arr[loc_start].get_distance_3d(default_arr[loc_to])
-                distances.append(Distance(default_arr[loc_start], default_arr[loc_to], dist))
-                distances.append(Distance(default_arr[loc_to], default_arr[loc_start], dist))
+                distances[loc_start][loc_to] = dist
+                distances[loc_to][loc_start] = dist
 
     return distances
 
@@ -59,46 +40,51 @@ def sort_locations(path, orig_path, distances):
     # Sort the given path(np array) and return a sorted array (new)
     # based on each location's distance to the starting point
 
-    location_ref = np.empty([path.size], dtype=object)
-
-    for loc_index in range(path.size):
-        for orig_path_index in range(path.size):
-            if path.array[loc_index] == (orig_path.array[orig_path_index]):
-                location_ref[loc_index] = orig_path.array[orig_path_index]
-                continue
-
-    # sorted_arr = np.empty([path.size], dtype=object)
     sorted_arr = np.array([])
     # keep the starting point
     # sorted_arr[0] = location_ref[0]
-    sorted_arr = np.append(sorted_arr, location_ref[0])
-
-    # sort the distances array
-    distances.sort(key=lambda x: x.dist)
+    sorted_arr = np.append(sorted_arr, path.locations[0])
 
     visited = []
-    visited.append(location_ref[0])
+    visited.append(path.locations[0])
 
     while len(visited) < path.size:
-        filtered = filter_dists(distances, sorted_arr[-1])
-        filtered.sort(key=lambda x: x.dist)
-        for i in range(len(filtered)):
-            if filtered[i].end in visited:
-                continue
-            else:
-                sorted_arr = np.append(sorted_arr, filtered[i].end)
-                visited.append(filtered[i].end)
-                break
 
+        # get every distance value starting with current location being visited
+        possible_dist = distances[sorted_arr[-1].index]
+
+        # iterate through the row to find the minimum distance that is nonzero
+        # i is the index of the location in adjacent matrix, find through orig_path
+        min = 9999999
+        destination = None
+
+        for i in range(len(possible_dist)):
+            dst = orig_path.locations[i]
+            if possible_dist[i] != 0 and possible_dist[i] < min and dst not in visited:
+                min = possible_dist[i]
+                destination = dst
+            else:
+                continue
+
+        sorted_arr = np.append(sorted_arr, destination)
+        visited.append(destination)
+
+    for i in sorted_arr:
+        print(i.coordinate, end="\t")
     return sorted_arr
 
 
-def filter_dists(distance_array, start):
-    filtered = []
-    for dis in distance_array:
-        if dis.dist > 0 and dis.start == start:
-            filtered.append(dis)
-    return filtered
+#def sort_based_on_x ():
+    # TODO: optimization.
+    # path = path[:, path[0, :].argsort()]
+
+
+# def filter_dists(distance_array, start):
+#     filtered = []
+#     for dis in distance_array:
+#         if dis.dist > 0 and dis.start == start:
+#             filtered.append(dis)
+#     return filtered
 
 
 def create_init_pop(location_list):
@@ -122,31 +108,32 @@ fitness: float
 
 Methods
 -------
-
+get_total_dist: 
+   get the total distance of the path (including end -> start)
+   
 """
 
 
 class Path:
     def __init__(self, array):
-        self.array = array
-        self.distance = np.finfo(np.float32).max
-        self.fitness = 0
+        self.locations = array
+        self.distance = 0
         self.size = array.size
 
-    def calculate_fitness(self):
-        if self.distance != 0:
-            fitness = 1 / float(self.distance)
-        return fitness
+    def get_total_dist(self):
+        dist = 0
+        for locindex in range(self.size):
+            # for each location in this path, get the distance between itself and next location
+            start_index = self.locations[locindex].index
+            if locindex < self.size-1:
+                end_index = self.locations[locindex+1].index
+            else: # the last location in path. Add a distance from this loc to the starting point
+                end_index = self.locations[0].index
+            tempdist = distances[start_index][end_index]
+            dist += tempdist
 
 
-class Distance:
-    def __init__(self, start, end, dist):
-        self.start = start
-        self.end = end
-        self.dist = dist
-
-    def printout(self):
-        print("from ", self.start.x, self.start.y, self.start.z, "to ", self.end.x, self.end.y, self.end.z, ", distance is ", self.dist)
+        return dist
 
 
 """
@@ -160,6 +147,9 @@ x, y, z : integer
 
 coordinate: np.array
     the original coordinate
+    
+index: int
+    indicates where to find this location in the distance matrix 
 
 Methods
 -------
@@ -175,14 +165,18 @@ equals(self, loc2)
 
 
 class Location:
-    def __init__(self, coord):
+    def __init__(self, coord, index):
         self.x = coord[0]
         self.y = coord[1]
         self.z = coord[2]
         self.coordinate = coord
+        self.index = index
+
+    def __eq__(self, loc2):
+        return self.x == loc2.x and self.y == loc2.y and self.z == loc2.z
 
     def get_distance_2d(self, loc2):
-        # compute the 2d distance between 2 locations
+        # compute the 2d distance between 2 coordinates
         dis_x = abs(self.x - loc2.x)
         dis_y = abs(self.y - loc2.y)
         distance = np.sqrt(dis_x ** 2 + dis_y ** 2)
@@ -198,9 +192,6 @@ class Location:
 
         return distance
 
-    def __eq__(self, loc2):
-        return self.x == loc2.x and self.y == loc2.y and self.z == loc2.z
-
 
 if __name__ == '__main__':
     with open("input.txt") as file:
@@ -214,30 +205,26 @@ if __name__ == '__main__':
     default_arr = np.empty(0)
 
     # Fill default path using loc_matrix
-    for item in loc_matrix:
-        new_loc = Location(item)
+    for item_index in range(len(loc_matrix)):
+        new_loc = Location(loc_matrix[item_index], item_index)
         default_arr = np.append(default_arr, new_loc)
 
-    # for i in range(num_of_loc):
-    #     print(default_arr[i].x, default_arr[i].y, default_arr[i].z)
+    # calculate distances between any pair of locations and store it in a 2d matrix (NOT NUMPY!!!!)
+    distances = get_adjacent_matrix(num_of_loc)
 
     default_path = Path(default_arr)
-    population = 10
-    gene_pool_init = np.empty(0)
-
-    # calculate distances between any pair of locations
-    distances = get_distances_list(num_of_loc)
-
-    # for d in distances:
-    #     d.printout()
 
     sorted_ar = sort_locations(default_path, default_path, distances)
+    sorted_path = Path(sorted_ar)
+    default_dist = default_path.get_total_dist()
+    sorted_dist = sorted_path.get_total_dist()
 
-
-
+    print(default_dist)
+    print(sorted_dist)
     # for chromosome in range(population):
 
-
+    population = 10
+    gene_pool_init = np.empty(0)
 
 
     #  for gene in range(population):
