@@ -40,6 +40,19 @@ def get_distance_3d(loc1, loc2):
     return distance
 
 
+def get_distances_list(loc_num):
+    for loc_start in range(num_of_loc):
+        for loc_to in range(num_of_loc):
+            if loc_start == loc_to:
+                distances.append(Distance(default_arr[loc_start], default_arr[loc_to], 0))
+                distances.append(Distance(default_arr[loc_to], default_arr[loc_start], 0))
+            else:
+                dist = default_arr[loc_start].get_distance_3d(default_arr[loc_to])
+                distances.append(Distance(default_arr[loc_start], default_arr[loc_to], dist))
+                distances.append(Distance(default_arr[loc_to], default_arr[loc_start], dist))
+# TODO: return distance, ....
+
+
 def sort_locations(path, orig_path, distances):
     # Sort the given path(np array) and return a sorted array (new)
     # based on each location's distance to the starting point
@@ -86,6 +99,10 @@ def filter_dists(distance_array, start):
     return filtered
 
 
+def create_init_pop(location_list):
+    population = np.empty([])
+
+
 """
 A class used to represent a path
 
@@ -128,6 +145,7 @@ class Distance:
 
     def printout(self):
         print("from ", self.start.x, self.start.y, self.start.z, "to ", self.end.x, self.end.y, self.end.z, ", distance is ", self.dist)
+
 
 """
 A class used to represent a location
@@ -209,13 +227,6 @@ if __name__ == '__main__':
     distances = []
     for loc_start in range(num_of_loc):
         for loc_to in range(num_of_loc):
-            # if loc_start == loc_to:
-            #     distances = np.append(distances, Distance(default_arr[loc_start], default_arr[loc_to], 0))
-            #     distances = np.append(distances, Distance(default_arr[loc_to], default_arr[loc_start], 0))
-            # else:
-            #     dist = default_arr[loc_start].get_distance_3d(default_arr[loc_to])
-            #     distances = np.append(distances, Distance(default_arr[loc_start], default_arr[loc_to], dist))
-            #     distances = np.append(distances, Distance(default_arr[loc_to], default_arr[loc_start], dist))
             if loc_start == loc_to:
                 distances.append(Distance(default_arr[loc_start], default_arr[loc_to], 0))
                 distances.append(Distance(default_arr[loc_to], default_arr[loc_start], 0))
@@ -228,9 +239,7 @@ if __name__ == '__main__':
     #     d.printout()
 
     sorted_ar = sort_locations(default_path, default_path, distances)
-    print(sorted_ar)
-    for i in sorted_ar:
-        print(i.x, i.y, i.z)
+
 
 
     # for chromosome in range(population):
