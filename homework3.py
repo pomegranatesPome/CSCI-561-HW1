@@ -2,21 +2,21 @@
 # Naiyu Wang
 
 import numpy as np
-import pandas as pd
+import random
 # from scipy import NearestNeighbors
 
 
 def loc_to_matrix(locations, numoflocs):
     # create empty matrix loc_matrix to store all locations later
-    matrix = np.empty((numoflocs, 3))
+    matrix = np.empty((numoflocs, 3), dtype=int)
 
     # convert each location's coordinate to a 3d numpy array
     for i in range(numoflocs):
         location = locations[i].split()
-        arr = np.array(location) # the 3d coordinate for one location
+        arr = np.array((location), dtype=int) # the 3d coordinate for one location
 
         # fill in the location matrix
-        matrix[i] = np.array([arr])
+        matrix[i] = np.array(([arr]), dtype=int)
 
     return matrix
 
@@ -100,10 +100,43 @@ def sort_generation(gen):
     gen.sort(key=lambda x: x.distance, reverse=False)
 
 
-# Mutate the last half (the longer distant paths) only!
-def mutate(gen):
-    len = len(gen)
-    half = len // 2
+# Crossover using OX1 (https://www.tutorialspoint.com/genetic_algorithms/genetic_algorithms_crossover.htm)
+# returns a new path
+def crossover(parent1, parent2):
+    chromosome_len = parent1.size
+
+    # get 2 random crossover points
+    xover_idx1 = random.randint(0, chromosome_len)
+    xover_idx2 = random.randint(0, chromosome_len)
+    while xover_idx1 == xover_idx2:
+        xover_idx2 = random.randint(0, chromosome_len)
+    if xover_idx1 > xover_idx2:
+        temp = xover_idx1
+        xover_idx1 = xover_idx2
+        xover_idx2 = temp
+
+    # lookup table to keep track of locations visited
+    values = [0] * chromosome_len
+    path1 = parent1.locations
+    lookup_table = {loc.to_string(): visited for loc, visited in zip(path1, values)}
+
+    child = [None] * chromosome_len
+    # copy parent1[idx1:idx2] to child[idx1, idx2]
+    for i in range(xover_idx1, xover_idx2):
+        loc = path1[i].to_string()
+        if lookup_table[loc] == 0:
+            child[i] = path1[i]
+            lookup_table[loc] = 1
+
+    print(child)
+
+
+
+
+# TODO: Mutate the last half (the longer distant paths) only!
+# def mutate(gen):
+#     len = len(gen)
+#     half = len // 2
 
     # for i in range(half, len):
 
@@ -212,6 +245,13 @@ class Location:
 
         return distance
 
+    def to_string(self):
+        coord = np.array2string(self.coordinate, separator=',')
+        return coord
+
+    def printout(self):
+        print(self.to_string())
+
 
 if __name__ == '__main__':
     with open("input.txt") as file:
@@ -222,7 +262,7 @@ if __name__ == '__main__':
     num_of_loc = int(lines[0])
     loc_matrix = loc_to_matrix(lines[1:], num_of_loc)
 
-    default_arr = np.empty(0)
+    default_arr = np.empty(0, dtype=int)
 
     # Fill default path using loc_matrix
     for item_index in range(len(loc_matrix)):
@@ -261,3 +301,5 @@ if __name__ == '__main__':
 
     # Sort gen 1 based on their distance
     sort_generation(gen1)
+
+    crossover(sorted_path, gen1[-1])
