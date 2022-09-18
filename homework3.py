@@ -69,8 +69,9 @@ def sort_locations(path, orig_path, distances):
         sorted_arr = np.append(sorted_arr, destination)
         visited.append(destination)
 
-    for i in sorted_arr:
-        print(i.coordinate, end="\t")
+    # for i in sorted_arr:
+    #     print(i.coordinate, end="\t")
+    # print("")
     return sorted_arr
 
 
@@ -79,17 +80,32 @@ def sort_locations(path, orig_path, distances):
     # path = path[:, path[0, :].argsort()]
 
 
-# def filter_dists(distance_array, start):
-#     filtered = []
-#     for dis in distance_array:
-#         if dis.dist > 0 and dis.start == start:
-#             filtered.append(dis)
-#     return filtered
+# returns a list of paths
+def create_init_pop(location_list, n):
+    pop = []
+    seed = 42
+    for i in range(n):
+        chromo = location_list.copy()
+        # shuffle the copied list
+        np.random.seed(seed)
+        np.random.shuffle(chromo)
+        chromopath = Path(chromo)
+        pop.append(chromopath)
+        seed += 2
+    return pop
 
 
-def create_init_pop(location_list):
-    population = np.empty([])
+# sort the generation based on their distances, from short to long.
+def sort_generation(gen):
+    gen.sort(key=lambda x: x.distance, reverse=False)
 
+
+# Mutate the last half (the longer distant paths) only!
+def mutate(gen):
+    len = len(gen)
+    half = len // 2
+
+    # for i in range(half, len):
 
 """
 A class used to represent a path
@@ -131,10 +147,14 @@ class Path:
                 end_index = self.locations[0].index
             tempdist = distances[start_index][end_index]
             dist += tempdist
-
-
+        self.distance = dist
         return dist
 
+    def printout(self):
+        print("Start: ", end="")
+        for i in self.locations:
+            print(i.coordinate, end="\t")
+        print(" End.\n")
 
 """
 A class used to represent a location
@@ -219,14 +239,25 @@ if __name__ == '__main__':
     default_dist = default_path.get_total_dist()
     sorted_dist = sorted_path.get_total_dist()
 
-    print(default_dist)
-    print(sorted_dist)
-    # for chromosome in range(population):
+    # generate initial random population using shuffle
+    gen1 = create_init_pop(default_arr, 10)
 
-    population = 10
-    gene_pool_init = np.empty(0)
+    # for i in range(10):
+    #     gen1[i].printout()
+    gen1max = 0
+    longestpath = -1
+    for i in range(len(gen1)):
+        dist = gen1[i].get_total_dist()
+        if gen1max <= dist:
+            gen1max = dist
+            longestpath = i
+    if longestpath >= 0: # if a longest path is found in gen1
+        # replace the path of max distance with sorted_path
+        gen1[i] = sorted_path
 
+    # for i in gen1:
+    #     i.printout()
+    #     print(i.get_total_dist())
 
-    #  for gene in range(population):
-
-
+    # Sort gen 1 based on their distance
+    sort_generation(gen1)
