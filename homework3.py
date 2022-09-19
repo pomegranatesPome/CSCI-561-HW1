@@ -187,28 +187,33 @@ def next_gen(parents, population):
             temp_path = crossover(parents[chr + 1], parents[chr])
             nextgen.append(temp_path)
 
-    print("poplulation = ", population,". Nextgen has ", len(nextgen))
+    # print("poplulation = ", population,". Nextgen has ", len(nextgen))
     # for i in nextgen:
     #     i.printout()
     #      print(i.distance)
 
     # Sort the offsprings
     sort_generation(nextgen)
-    print("------------------------OFFSPRINGS: ------------------------------")
+    # print("------------------------OFFSPRINGS: ------------------------------")
     offsprings = [None] * population
     for i in range(population):
         offsprings[i] = nextgen[i]
-        offsprings[i].printout()
-        print(offsprings[i].distance)
+        # offsprings[i].printout()
+        # print(offsprings[i].distance)
+
+    # Add mutation
+    mutate(offsprings, 0.5)
 
     return offsprings
 
-# TODO: Mutate the last half (the longer distant paths) only!
-# def mutate(gen):
-#     len = len(gen)
-#     half = len // 2
 
-    # for i in range(half, len):
+def mutate(gen, rate):
+    length = len(gen)
+    half = length // 2
+    for chromosome in gen[half:]:
+        if random.random() < rate:
+            chromosome.locations = np.flip(chromosome.locations)
+
 
 """
 A class used to represent a path
@@ -217,19 +222,21 @@ A class used to represent a path
 
 Attributes
 ----------
-path : np.array
+locations : np.array
     an array of locations 
     first element = last element for a complete path
 distance : float 
     the total length of the path, starting with max
-fitness: float
-    1 / distance. As the less the distance is, the better the path is.
+size: int
+    the length of np.array locations
 
 Methods
 -------
 get_total_dist: 
    get the total distance of the path (including end -> start)
-   
+
+printout:
+    print all the coordinates for debugging purposes
 """
 
 
@@ -284,6 +291,12 @@ get_distance_3d(self, loc2)
     
 equals(self, loc2)
     compare if the coordinates are the same
+    
+to_string()
+    convert coordinate (np array) into a string for hashing purposes
+
+printout()
+    print the coordinate
 """
 
 
@@ -364,9 +377,9 @@ if __name__ == '__main__':
         # replace the path of max distance with sorted_path
         gen1[i] = sorted_path
 
-    for i in range(10):
-        gen1[i].printout()
-    print("------------------------END OF GEN1------------------------------")
+    # for i in range(10):
+    #     gen1[i].printout()
+    # print("------------------------END OF GEN1------------------------------")
     # for i in gen1:
     #     i.printout()
     #     print(i.get_total_dist())
@@ -380,3 +393,5 @@ if __name__ == '__main__':
 
     for g in range(25):
         gen1 = next_gen(gen1, 10)
+
+    optimal_path = gen1[0]
