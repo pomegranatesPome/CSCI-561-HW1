@@ -6,8 +6,8 @@ import math
 
 
 def loc_to_matrix(locations, numoflocs):
-    print("locations: ", locations)
-    print("numoflocs:",numoflocs)
+    # print("locations: ", locations)
+    # print("numoflocs:",numoflocs)
     # create empty matrix loc_matrix to store all locations later
     matrix = []
     coordinate = []
@@ -19,7 +19,7 @@ def loc_to_matrix(locations, numoflocs):
             # fill in the location matrix
         matrix.append(coordinate)
         coordinate = []
-    print("matrix: ", matrix, "\nlen of matrix = ", len(matrix))
+    # print("matrix: ", matrix, "\nlen of matrix = ", len(matrix))
     return matrix
 
 
@@ -40,7 +40,7 @@ def get_adjacent_matrix(loc_num):
 
 
 def sort_locations(path, orig_path, distances):
-    # Sort the given path(np array) and return a sorted array (new)
+    # Sort the given path (list) and return a sorted array (new)
     # based on each location's distance to the starting point
 
     sorted_arr = []
@@ -168,22 +168,43 @@ def crossover(parent1, parent2):
     return Path(child)
 
 
+def make_prob_roulette(pop): # each p in pop is a path
+    # keys = pop
+    probabilities = {}
+    sumdist = 0
+    for key in pop:
+        sumdist += key.distance
+    for key in pop:
+        probabilities[key] = key.distance / sumdist
+    probabilities[key] = key.distance
+    return probabilities
+
+
+def parent_selection(roulette):
+    selection1 = random.random()
+    selection2 = random.random()
+    min1 = 9999
+    min2 = 9999
+    closest1 = None
+    closest2 = None
+    for key in roulette:
+        if abs(roulette[key] - selection1) < min1:
+            closest1 = key
+            min1 = (roulette[key] - selection1)
+        if abs(roulette[key] - selection2) < min2:
+            closest2 = key
+            min2 = (roulette[key] - selection2)
+    return closest1, closest2
+
+
 def next_gen(parents, population):
     nextgen = []
     # A generation is a list of Paths
-    temp_path = None
-    for chr in range(population):
-        if chr == population - 1:
-            temp_path = crossover(parents[0], parents[chr])
-            nextgen.append(temp_path)
-            temp_path = crossover(parents[chr], parents[0])
-            nextgen.append(temp_path)
-        else:
-            temp_path = crossover(parents[chr], parents[chr + 1])
-            nextgen.append(temp_path)
-            temp_path = crossover(parents[chr + 1], parents[chr])
-            nextgen.append(temp_path)
-
+    probabilities = make_prob_roulette(parents)
+    for i in range(population):
+        p1, p2 = parent_selection(probabilities)
+        child = crossover(p1, p2)
+        nextgen.append(child)
     # print("poplulation = ", population,". Nextgen has ", len(nextgen))
     # for i in nextgen:
     #     i.printout()
@@ -208,10 +229,8 @@ def mutate(gen, rate):
     length = len(gen)
     half = length // 2
     for chromosome in gen[half:]:
-        chromosome.printout()
         if random.random() < rate:
             chromosome.locations.reverse()
-            chromosome.printout()
             swapidx1 = random.randint(0, chromosome.size - 1)
             swapidx2 = random.randint(0, chromosome.size - 1)
             temp = chromosome.locations[swapidx2]
@@ -353,28 +372,34 @@ if __name__ == '__main__':
     loc_matrix = loc_to_matrix(lines[1:], num_of_loc)
 
     default_arr = []
-
+    sorted_def = []
     # Fill default path using loc_matrix
     for item_index in range(len(loc_matrix)):
-        print("loc_matrix[item_index]:", loc_matrix[item_index], "itemindex = ", item_index )
         new_loc = Location(loc_matrix[item_index], item_index)
         default_arr.append(new_loc)
+        sorted_def.append(new_loc)
+
+    sorted_def.sort(key=lambda x: x.x)
 
     # calculate distances between any pair of locations and store it in a 2d matrix (NOT NUMPY!!!!)
     distances = get_adjacent_matrix(num_of_loc)
 
     default_path = Path(default_arr)
+    sorted_path = Path(sorted_def)
+    # print("Default path: ",end =" ")
+    # default_path.printout()
 
-    # TODO: change the starting location to the one with the smallest X
-    sorted_ar = sort_locations(default_path, default_path, distances)
+    # print("sorted input path: ",end =" ")
+    # sorted_path.printout()
+
+    sorted_ar = sort_locations(sorted_path, default_path, distances)
     sorted_path = Path(sorted_ar)
-    default_dist = default_path.get_total_dist()
-    sorted_dist = sorted_path.get_total_dist()
-
+    # print(default_path.distance)
+    # print(sorted_path.distance)
     # determine population based on number of locations
     pop_max = 100
     pop_min = 10
-    dynamic_pop = int(num_of_loc * 1.5)
+    dynamic_pop = int(num_of_loc * 2)
     if dynamic_pop > pop_max:
         dynamic_pop = pop_max
     if dynamic_pop < pop_min:
@@ -390,16 +415,16 @@ if __name__ == '__main__':
         if gen1max <= dist:
             gen1max = dist
             longestpath = i
-            # TODO: COMMENT BELOW
+
     if longestpath >= 0: # if a longest path is found in gen1
         # replace the path of max distance with sorted_path
         gen1[i] = sorted_path
 
     #  create the next generation
     offs = [None] * dynamic_pop
-
-    for g in range(150):
+    for g in range(200):
         gen1 = next_gen(gen1, dynamic_pop)
+        # print(gen1[0].distance)
 
     optimal_path = gen1[0]
     # for p in gen1:
@@ -407,7 +432,10 @@ if __name__ == '__main__':
     #         print(i.output_format(), end="\t\t")
     #     print(p.get_total_dist())
 
+
     with open("output.txt", "w") as out:
+        # print( optimal_path.locations)
+        # print(optimal_path.distance)
         for loc in optimal_path.locations:
             out.write(loc.output_format())
             out.write(" ")
