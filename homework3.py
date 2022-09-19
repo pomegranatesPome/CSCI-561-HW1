@@ -75,23 +75,18 @@ def sort_locations(path, orig_path, distances):
     return sorted_arr
 
 
-#def sort_based_on_x ():
-    # TODO: optimization.
-    # path = path[:, path[0, :].argsort()]
-
-
 # returns a list of paths
 def create_init_pop(location_list, n):
     pop = []
-    seed = 42
+    # seed = 42
     for i in range(n):
         chromo = location_list.copy()
         # shuffle the copied list
-        np.random.seed(seed)
+        # np.random.seed(seed)
         np.random.shuffle(chromo)
         chromopath = Path(chromo)
         pop.append(chromopath)
-        seed += 2
+        # seed += 2
     return pop
 
 
@@ -345,7 +340,6 @@ class Location:
         return string
 
 
-
 if __name__ == '__main__':
     with open("input.txt") as file:
         lines = file.readlines()
@@ -367,14 +361,20 @@ if __name__ == '__main__':
 
     default_path = Path(default_arr)
 
+    # TODO: change the starting location to the one with the smallest X
     sorted_ar = sort_locations(default_path, default_path, distances)
     sorted_path = Path(sorted_ar)
     default_dist = default_path.get_total_dist()
     sorted_dist = sorted_path.get_total_dist()
 
-    # generate initial random population using shuffle
-    gen1 = create_init_pop(default_arr, 10)
+    # determine population based on number of locations
+    pop_max = 100
+    dynamic_pop = int(num_of_loc * 2.5)
+    if dynamic_pop > pop_max:
+        dynamic_pop = pop_max
 
+    # generate initial random population using shuffle
+    gen1 = create_init_pop(default_arr, dynamic_pop)
 
     gen1max = 0
     longestpath = -1
@@ -387,28 +387,17 @@ if __name__ == '__main__':
         # replace the path of max distance with sorted_path
         gen1[i] = sorted_path
 
-    # for i in range(10):
-    #     gen1[i].printout()
-    # print("------------------------END OF GEN1------------------------------")
-    # for i in gen1:
-    #     i.printout()
-    #     print(i.get_total_dist())
-
-    # # Sort gen 1 based on their distance
-    # sort_generation(gen1)
-
     #  create the next generation
-    offs = [None] * 10
-    # next_gen(gen1, offs, 10)
+    offs = [None] * dynamic_pop
 
-    for g in range(25):
-        gen1 = next_gen(gen1, 10)
+    for g in range(200):
+        gen1 = next_gen(gen1, dynamic_pop)
 
     optimal_path = gen1[0]
-    for p in gen1:
-        for i in p.locations:
-            print(i.output_format(), end="\t\t")
-        print(p.get_total_dist())
+    # for p in gen1:
+    #     for i in p.locations:
+    #         print(i.output_format(), end="\t\t")
+    #     print(p.get_total_dist())
 
     with open("output.txt", "w") as out:
         for loc in optimal_path.locations:
