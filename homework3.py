@@ -97,6 +97,8 @@ def create_init_pop(location_list, n):
 
 # sort the generation based on their distances, from short to long.
 def sort_generation(gen):
+    # for i in gen:
+    #     i.get_total_dist()
     gen.sort(key=lambda x: x.distance, reverse=False)
 
 
@@ -165,11 +167,41 @@ def crossover(parent1, parent2):
                 child[i] = path2[p2idx]
                 lookup_table[(path2[p2idx].to_string())] = 1
                 p2idx += 1
-        # i.printout()
 
-        return Path(child)
+    return Path(np.array(child))
 
 
+def next_gen(parents, population):
+    nextgen = []
+    # A generation is a list of Paths
+    temp_path = None
+    for chr in range(population):
+        if chr == population - 1:
+            temp_path = crossover(parents[0], parents[chr])
+            nextgen.append(temp_path)
+            temp_path = crossover(parents[chr], parents[0])
+            nextgen.append(temp_path)
+        else:
+            temp_path = crossover(parents[chr], parents[chr + 1])
+            nextgen.append(temp_path)
+            temp_path = crossover(parents[chr + 1], parents[chr])
+            nextgen.append(temp_path)
+
+    print("poplulation = ", population,". Nextgen has ", len(nextgen))
+    # for i in nextgen:
+    #     i.printout()
+    #      print(i.distance)
+
+    # Sort the offsprings
+    sort_generation(nextgen)
+    print("------------------------OFFSPRINGS: ------------------------------")
+    offsprings = [None] * population
+    for i in range(population):
+        offsprings[i] = nextgen[i]
+        offsprings[i].printout()
+        print(offsprings[i].distance)
+
+    return offsprings
 
 # TODO: Mutate the last half (the longer distant paths) only!
 # def mutate(gen):
@@ -204,8 +236,8 @@ get_total_dist:
 class Path:
     def __init__(self, array):
         self.locations = array
-        self.distance = 0
         self.size = array.size
+        self.distance = self.get_total_dist()
 
     def get_total_dist(self):
         dist = 0
@@ -320,8 +352,7 @@ if __name__ == '__main__':
     # generate initial random population using shuffle
     gen1 = create_init_pop(default_arr, 10)
 
-    # for i in range(10):
-    #     gen1[i].printout()
+
     gen1max = 0
     longestpath = -1
     for i in range(len(gen1)):
@@ -333,6 +364,9 @@ if __name__ == '__main__':
         # replace the path of max distance with sorted_path
         gen1[i] = sorted_path
 
+    for i in range(10):
+        gen1[i].printout()
+    print("------------------------END OF GEN1------------------------------")
     # for i in gen1:
     #     i.printout()
     #     print(i.get_total_dist())
@@ -341,3 +375,8 @@ if __name__ == '__main__':
     # sort_generation(gen1)
 
     #  create the next generation
+    offs = [None] * 10
+    # next_gen(gen1, offs, 10)
+
+    for g in range(25):
+        gen1 = next_gen(gen1, 10)
