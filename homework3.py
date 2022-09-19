@@ -106,10 +106,10 @@ def crossover(parent1, parent2):
     chromosome_len = parent1.size
 
     # get 2 random crossover points
-    xover_idx1 = random.randint(0, chromosome_len)
-    xover_idx2 = random.randint(0, chromosome_len)
+    xover_idx1 = random.randint(0, chromosome_len - 1) # random.randint is inclusive on the right
+    xover_idx2 = random.randint(0,  chromosome_len - 1)
     while xover_idx1 == xover_idx2:
-        xover_idx2 = random.randint(0, chromosome_len)
+        xover_idx2 = random.randint(0,  chromosome_len - 1)
     if xover_idx1 > xover_idx2:
         temp = xover_idx1
         xover_idx1 = xover_idx2
@@ -118,18 +118,56 @@ def crossover(parent1, parent2):
     # lookup table to keep track of locations visited
     values = [0] * chromosome_len
     path1 = parent1.locations
+    path2 = parent2.locations
     lookup_table = {loc.to_string(): visited for loc, visited in zip(path1, values)}
+    #
+    # print("parent1: ", end="\t")
+    # parent1.printout()
+    # print("parent2: ", end="\t")
+    # parent2.printout()
+    # print("crossover starts: ",xover_idx1, "ends at: ",xover_idx2)
 
-    child = [None] * chromosome_len
+    # A list of locations (a new path)
+    tester_loc = Location(np.array((-1, -1, -1), dtype=int), -1) # the dummy location for debugging
+    child = [tester_loc] * chromosome_len
     # copy parent1[idx1:idx2] to child[idx1, idx2]
-    for i in range(xover_idx1, xover_idx2):
+    for i in range(xover_idx1, xover_idx2 + 1):
         loc = path1[i].to_string()
         if lookup_table[loc] == 0:
             child[i] = path1[i]
             lookup_table[loc] = 1
+    #
+    # for i in child:
+    #     if i == tester_loc: # Not filled in
+    #         print("?")
+    #     else:
+    #         i.printout()
+    # print("\n")
 
-    print(child)
+    # fill the rest of the chromosome with parent2's unvisited locations, starting with xover_idx1
+    p2idx = xover_idx1
 
+    for i in range(chromosome_len):
+
+        if p2idx == chromosome_len:
+            p2idx = 0 # print("p2idx is set to 0")
+
+        if child[i] == tester_loc: # if current space is empty, fill it
+            # if this location is visited, then skip to the next.
+            while lookup_table[(path2[p2idx].to_string())] != 0:
+                # start from parent2[xover_idx1] and moves to the right
+                if p2idx <= chromosome_len - 2:
+                    p2idx += 1
+                else:  # if p2idx == chromosome_len - 1, aka the last legal index in path2
+                    p2idx = 0
+                    # print("p2idx is set to 0")
+            if lookup_table[(path2[p2idx].to_string())] == 0:
+                child[i] = path2[p2idx]
+                lookup_table[(path2[p2idx].to_string())] = 1
+                p2idx += 1
+        # i.printout()
+
+        return Path(child)
 
 
 
@@ -299,7 +337,7 @@ if __name__ == '__main__':
     #     i.printout()
     #     print(i.get_total_dist())
 
-    # Sort gen 1 based on their distance
-    sort_generation(gen1)
+    # # Sort gen 1 based on their distance
+    # sort_generation(gen1)
 
-    crossover(sorted_path, gen1[-1])
+    #  create the next generation
