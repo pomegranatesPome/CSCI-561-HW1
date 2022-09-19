@@ -213,7 +213,12 @@ def mutate(gen, rate):
     for chromosome in gen[half:]:
         if random.random() < rate:
             chromosome.locations = np.flip(chromosome.locations)
-
+        if random.random() < rate:
+            swapidx1 = random.randint(0, chromosome.size - 1)
+            swapidx2 = random.randint(0, chromosome.size - 1)
+            temp = chromosome.locations[swapidx2]
+            chromosome.locations[swapidx2] = chromosome.locations[swapidx1]
+            chromosome.locations[swapidx1] = temp
 
 """
 A class used to represent a path
@@ -335,6 +340,11 @@ class Location:
     def printout(self):
         print(self.to_string())
 
+    def output_format(self):
+        string = str(self.x) + " " + str(self.y) + " " + str(self.z)
+        return string
+
+
 
 if __name__ == '__main__':
     with open("input.txt") as file:
@@ -395,3 +405,14 @@ if __name__ == '__main__':
         gen1 = next_gen(gen1, 10)
 
     optimal_path = gen1[0]
+    for p in gen1:
+        for i in p.locations:
+            print(i.output_format(), end="\t\t")
+        print(p.get_total_dist())
+
+    with open("output.txt", "w") as out:
+        for loc in optimal_path.locations:
+            out.write(loc.output_format())
+            out.write(" ")
+            out.write("\n")
+        out.write(optimal_path.locations[0].output_format())
