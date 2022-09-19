@@ -1,24 +1,27 @@
 # CS561 Homework 1, 2022 Fall
 # Naiyu Wang
 
-import numpy as np
 import random
-# from scipy import NearestNeighbors
+import math
 
 
 def loc_to_matrix(locations, numoflocs):
+    print("locations: ", locations)
+    print("numoflocs:",numoflocs)
     # create empty matrix loc_matrix to store all locations later
-    matrix = np.empty((numoflocs, 3), dtype=int)
-
+    matrix = []
+    coordinate = []
     # convert each location's coordinate to a 3d numpy array
     for i in range(numoflocs):
-        location = locations[i].split()
-        arr = np.array((location), dtype=int) # the 3d coordinate for one location
-
-        # fill in the location matrix
-        matrix[i] = np.array(([arr]), dtype=int)
-
+        for j in range(3):
+            component = locations[i].strip().split(" ")[j]
+            coordinate.append(int(component))
+            # fill in the location matrix
+        matrix.append(coordinate)
+        coordinate = []
+    print("matrix: ", matrix, "\nlen of matrix = ", len(matrix))
     return matrix
+
 
 def get_adjacent_matrix(loc_num):
     # distances is a 2d array of adjacent matrix
@@ -40,10 +43,10 @@ def sort_locations(path, orig_path, distances):
     # Sort the given path(np array) and return a sorted array (new)
     # based on each location's distance to the starting point
 
-    sorted_arr = np.array([])
+    sorted_arr = []
     # keep the starting point
     # sorted_arr[0] = location_ref[0]
-    sorted_arr = np.append(sorted_arr, path.locations[0])
+    sorted_arr.append(path.locations[0])
 
     visited = []
     visited.append(path.locations[0])
@@ -66,7 +69,7 @@ def sort_locations(path, orig_path, distances):
             else:
                 continue
 
-        sorted_arr = np.append(sorted_arr, destination)
+        sorted_arr.append(destination)
         visited.append(destination)
 
     # for i in sorted_arr:
@@ -82,8 +85,7 @@ def create_init_pop(location_list, n):
     for i in range(n):
         chromo = location_list.copy()
         # shuffle the copied list
-        # np.random.seed(seed)
-        np.random.shuffle(chromo)
+        random.shuffle(chromo)
         chromopath = Path(chromo)
         pop.append(chromopath)
         # seed += 2
@@ -125,7 +127,7 @@ def crossover(parent1, parent2):
     # print("crossover starts: ",xover_idx1, "ends at: ",xover_idx2)
 
     # A list of locations (a new path)
-    tester_loc = Location(np.array((-1, -1, -1), dtype=int), -1) # the dummy location for debugging
+    tester_loc = Location(([-1, -1, -1]), -1) # the dummy location for debugging
     child = [tester_loc] * chromosome_len
     # copy parent1[idx1:idx2] to child[idx1, idx2]
     for i in range(xover_idx1, xover_idx2 + 1):
@@ -163,7 +165,7 @@ def crossover(parent1, parent2):
                 lookup_table[(path2[p2idx].to_string())] = 1
                 p2idx += 1
 
-    return Path(np.array(child))
+    return Path(child)
 
 
 def next_gen(parents, population):
@@ -206,9 +208,10 @@ def mutate(gen, rate):
     length = len(gen)
     half = length // 2
     for chromosome in gen[half:]:
+        chromosome.printout()
         if random.random() < rate:
-            chromosome.locations = np.flip(chromosome.locations)
-        if random.random() < rate:
+            chromosome.locations.reverse()
+            chromosome.printout()
             swapidx1 = random.randint(0, chromosome.size - 1)
             swapidx2 = random.randint(0, chromosome.size - 1)
             temp = chromosome.locations[swapidx2]
@@ -243,7 +246,7 @@ printout:
 class Path:
     def __init__(self, array):
         self.locations = array
-        self.size = array.size
+        self.size = len(array)
         self.distance = self.get_total_dist()
 
     def get_total_dist(self):
@@ -315,7 +318,7 @@ class Location:
         # compute the 2d distance between 2 coordinates
         dis_x = abs(self.x - loc2.x)
         dis_y = abs(self.y - loc2.y)
-        distance = np.sqrt(dis_x ** 2 + dis_y ** 2)
+        distance = math.sqrt(dis_x ** 2 + dis_y ** 2)
 
         return distance
 
@@ -324,12 +327,12 @@ class Location:
         dis_x = abs(self.x - loc2.x)
         dis_y = abs(self.y - loc2.y)
         dis_z = abs(self.z - loc2.z)
-        distance = np.sqrt(dis_x ** 2 + dis_y ** 2 + dis_z ** 2)
+        distance = math.sqrt(dis_x ** 2 + dis_y ** 2 + dis_z ** 2)
 
         return distance
 
     def to_string(self):
-        coord = np.array2string(self.coordinate, separator=',')
+        coord = " ".join(str(self.coordinate))
         return coord
 
     def printout(self):
@@ -349,12 +352,13 @@ if __name__ == '__main__':
     num_of_loc = int(lines[0])
     loc_matrix = loc_to_matrix(lines[1:], num_of_loc)
 
-    default_arr = np.empty(0, dtype=int)
+    default_arr = []
 
     # Fill default path using loc_matrix
     for item_index in range(len(loc_matrix)):
+        print("loc_matrix[item_index]:", loc_matrix[item_index], "itemindex = ", item_index )
         new_loc = Location(loc_matrix[item_index], item_index)
-        default_arr = np.append(default_arr, new_loc)
+        default_arr.append(new_loc)
 
     # calculate distances between any pair of locations and store it in a 2d matrix (NOT NUMPY!!!!)
     distances = get_adjacent_matrix(num_of_loc)
@@ -369,9 +373,12 @@ if __name__ == '__main__':
 
     # determine population based on number of locations
     pop_max = 100
-    dynamic_pop = int(num_of_loc * 2.5)
+    pop_min = 10
+    dynamic_pop = int(num_of_loc * 1.5)
     if dynamic_pop > pop_max:
         dynamic_pop = pop_max
+    if dynamic_pop < pop_min:
+        dynamic_pop = pop_min
 
     # generate initial random population using shuffle
     gen1 = create_init_pop(default_arr, dynamic_pop)
@@ -383,6 +390,7 @@ if __name__ == '__main__':
         if gen1max <= dist:
             gen1max = dist
             longestpath = i
+            # TODO: COMMENT BELOW
     if longestpath >= 0: # if a longest path is found in gen1
         # replace the path of max distance with sorted_path
         gen1[i] = sorted_path
@@ -390,7 +398,7 @@ if __name__ == '__main__':
     #  create the next generation
     offs = [None] * dynamic_pop
 
-    for g in range(200):
+    for g in range(150):
         gen1 = next_gen(gen1, dynamic_pop)
 
     optimal_path = gen1[0]
