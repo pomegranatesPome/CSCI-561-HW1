@@ -173,10 +173,10 @@ def make_prob_roulette(pop): # each p in pop is a path
     probabilities = {}
     sumdist = 0
     for key in pop:
-        sumdist += key.distance
+        sumdist += 1 / key.distance
     for key in pop:
-        probabilities[key] = key.distance / sumdist
-    probabilities[key] = key.distance
+        probabilities[key] = (1 / key.distance) / sumdist
+    probabilities[key] = (1 / key.distance)
     return probabilities
 
 
