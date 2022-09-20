@@ -201,7 +201,7 @@ def next_gen(parents, population):
     nextgen = []
     # A generation is a list of Paths
     probabilities = make_prob_roulette(parents)
-    for i in range(population):
+    for i in range(int(population * 1.4)):
         p1, p2 = parent_selection(probabilities)
         child = crossover(p1, p2)
         nextgen.append(child)
@@ -227,7 +227,7 @@ def next_gen(parents, population):
 
 def mutate(gen, rate):
     length = len(gen)
-    mutation_start = (int)(length * 2 / 3)
+    mutation_start = int(length * 2 / 3)
     for chromosome in gen[mutation_start:]:
         if random.random() < rate:
             mutate_by_shuffling(chromosome)
@@ -409,7 +409,7 @@ if __name__ == '__main__':
     # print(default_path.distance)
     # print(sorted_path.distance)
     # determine population based on number of locations
-    pop_max = 450
+    pop_max = 200
     pop_min = 50
     dynamic_pop = int(num_of_loc * 2)
     if dynamic_pop > pop_max:
