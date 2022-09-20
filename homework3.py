@@ -227,15 +227,27 @@ def next_gen(parents, population):
 
 def mutate(gen, rate):
     length = len(gen)
-    half = length // 2
-    for chromosome in gen[half:]:
+    mutation_start = (int)(length * 2 / 3)
+    for chromosome in gen[mutation_start:]:
         if random.random() < rate:
-            chromosome.locations.reverse()
-            swapidx1 = random.randint(0, chromosome.size - 1)
-            swapidx2 = random.randint(0, chromosome.size - 1)
-            temp = chromosome.locations[swapidx2]
-            chromosome.locations[swapidx2] = chromosome.locations[swapidx1]
-            chromosome.locations[swapidx1] = temp
+            mutate_by_shuffling(chromosome)
+            mutate_by_swapping(chromosome)
+
+
+def mutate_by_swapping(chromosome):
+    swapidx1 = random.randint(0, chromosome.size - 1)
+    swapidx2 = random.randint(0, chromosome.size - 1)
+    temp = chromosome.locations[swapidx2]
+    chromosome.locations[swapidx2] = chromosome.locations[swapidx1]
+    chromosome.locations[swapidx1] = temp
+
+
+def mutate_by_reverse(chromosome):
+    chromosome.locations.reverse()
+
+
+def mutate_by_shuffling(chromosome):
+    random.shuffle(chromosome.locations)
 
 """
 A class used to represent a path
@@ -397,8 +409,8 @@ if __name__ == '__main__':
     # print(default_path.distance)
     # print(sorted_path.distance)
     # determine population based on number of locations
-    pop_max = 100
-    pop_min = 10
+    pop_max = 450
+    pop_min = 50
     dynamic_pop = int(num_of_loc * 2)
     if dynamic_pop > pop_max:
         dynamic_pop = pop_max
@@ -431,7 +443,6 @@ if __name__ == '__main__':
     #     for i in p.locations:
     #         print(i.output_format(), end="\t\t")
     #     print(p.get_total_dist())
-
 
     with open("output.txt", "w") as out:
         # print( optimal_path.locations)
