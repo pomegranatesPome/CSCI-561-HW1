@@ -39,17 +39,17 @@ def get_adjacent_matrix(loc_num):
     return distances
 
 
-def sort_locations(path, orig_path, distances):
+def sort_locations(path, orig_path, distances, starting_index):
     # Sort the given path (list) and return a sorted array (new)
     # based on each location's distance to the starting point
 
     sorted_arr = []
     # keep the starting point
     # sorted_arr[0] = location_ref[0]
-    sorted_arr.append(path.locations[0])
+    sorted_arr.append(path.locations[starting_index])
 
     visited = []
-    visited.append(path.locations[0])
+    visited.append(path.locations[starting_index])
 
     while len(visited) < path.size:
 
@@ -88,7 +88,6 @@ def create_init_pop(location_list, n):
         random.shuffle(chromo)
         chromopath = Path(chromo)
         pop.append(chromopath)
-        # seed += 2
     return pop
 
 
@@ -176,7 +175,7 @@ def make_prob_roulette(pop): # each p in pop is a path
         sumdist += 1 / key.distance
     for key in pop:
         probabilities[key] = (1 / key.distance) / sumdist
-    probabilities[key] = (1 / key.distance)
+    # probabilities[key] = (1 / key.distance)
     return probabilities
 
 
@@ -403,13 +402,18 @@ if __name__ == '__main__':
 
     # print("sorted input path: ",end =" ")
     # sorted_path.printout()
+    greedy_paths = []
+    for i in range(1, 10):
+        greedy_arr = sort_locations(default_path, default_path, distances, i)
+        greedy = Path(greedy_arr)
+        greedy_paths.append(greedy)
 
-    sorted_ar = sort_locations(sorted_path, default_path, distances)
+    sorted_ar = sort_locations(sorted_path, default_path, distances, 0)
     sorted_path = Path(sorted_ar)
     # print(default_path.distance)
     # print(sorted_path.distance)
     # determine population based on number of locations
-    pop_max = 200
+    pop_max = 250
     pop_min = 50
     dynamic_pop = int(num_of_loc * 2)
     if dynamic_pop > pop_max:
@@ -431,6 +435,7 @@ if __name__ == '__main__':
     if longestpath >= 0: # if a longest path is found in gen1
         # replace the path of max distance with sorted_path
         gen1[i] = sorted_path
+    gen1.extend(greedy_paths)
 
     #  create the next generation
     offs = [None] * dynamic_pop
